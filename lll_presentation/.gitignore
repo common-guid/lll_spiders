@@ -4,3 +4,7 @@ inputs/
 
 # ignore env
 venv/
+
+BACKUP_DAT/
+
+data_collected/

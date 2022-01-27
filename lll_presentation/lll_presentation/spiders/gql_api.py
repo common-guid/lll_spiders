@@ -26,7 +26,7 @@ class GqlApiSpider(scrapy.Spider):
     cookies = {'ltmo':'1', 'UsrLocale':'en_US', 'Country':'US'}
 
     def start_requests(self):
-        with open('/home/guid/Work/lll_presentation/lll_presentation/lll_presentation/output/gql_sku_list.txt', 'r') as f:
+        with open('/home/guid/Work/lll_presentation/lll_presentation/lll_presentation/data_inputs/gql_sku_list.txt', 'r') as f:
             skus = f.readlines()
             end = round(len(skus),-3)
             start = 0
@@ -36,8 +36,9 @@ class GqlApiSpider(scrapy.Spider):
             payload = {"query":"query GetInventoryDetails($productId: String!, $skus: [String!]!) {\n  inventoryDetails(productId: $productId, skus: $skus) {\n    sku {\n      id\n      available\n      isLowStock\n      lowStockMessage\n      __typename\n    }\n    __typename\n  }\n}\n","operationName":"GetInventoryDetails","variables":{"productId":"prod10720035","skus":f"{sku_list}"}}
 
             gql = GqlApiSpider.start_urls[0] + "cne/graphql"
-            yield scrapy.http.JsonRequest(url='https://homedepot.com', headers=GqlApiSpider.headers, cookies=GqlApiSpider.cookies, data=payload)
+            yield scrapy.http.JsonRequest(url=gql, headers=GqlApiSpider.headers, cookies=GqlApiSpider.cookies, data=payload)
             start += 500
             sleep(3)
+            
     def parse(self, response):
         yield response.json()

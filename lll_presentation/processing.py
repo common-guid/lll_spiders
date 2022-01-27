@@ -5,10 +5,12 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 pd.options.mode.chained_assignment = None
 
+## processing product data from 'json_api' spider
+
 data_df = pd.DataFrame(columns=["item_name", "sku", "list_price", "on_sale", "min_sale", "max_sale", 
                     "sizes", "hierarchy"])
 
-with jsonlines.open('/home/guid/Work/lll_presentation/lll_presentation/lll_presentation/output/run1.jl', 'r') as f: 
+with jsonlines.open('/home/guid/Work/lll_presentation/lll_presentation/lll_presentation/data_inputs/product_detail.jl', 'r') as f: 
     for item in f:
         raw = json.dumps(item['all_detail'])
         data = json.loads(raw)
@@ -32,14 +34,14 @@ with jsonlines.open('/home/guid/Work/lll_presentation/lll_presentation/lll_prese
 df = data_df[data_df['on_sale'] == '1']
 df['avg_sale'] = (df['min_sale'] + df['max_sale']) / 2
 df['pct_redux'] = (df['avg_sale'] - df['list_price']) / df['list_price']
-print("Average Discount % :", df['pct_redux'].mean() * 100)
+print("Average Discount % ::", df['pct_redux'].mean() * 100)
 
 
 ## parsing scrapying gql_spider output
 
 gdf = pd.DataFrame(columns=['sku', 'low_stock', 'availability'])
 
-fp = open('/home/guid/Work/lll_presentation/lll_presentation/lll_presentation/output/fulltestGQL.jl','r')
+fp = open('/home/guid/Work/lll_presentation/lll_presentation/lll_presentation/data_inputs/invn_item_data.jl','r')
 reader = jsonlines.Reader(fp)
 first = reader.read()
 
@@ -53,19 +55,23 @@ for item in reader:
                         ignore_index=True) 
 
 all_sku = pd.merge(left=data_df, right=gdf, how='left')
+sale_and_low = all_sku.query('on_sale =="1" & low_stock ==True')
 
-print("number unique sku: ", gdf['sku'].nunique())
+print("number unique sku :: ", gdf['sku'].nunique())
 dedupe = gdf.drop_duplicates(subset='sku')
-print("count low stock: ", dedupe['low_stock'].value_counts())
-print("count available: ", dedupe['availability'].value_counts())
+print("count low stock :: ",'\n', dedupe['low_stock'].value_counts())
+print("count available :: ", '\n', dedupe['availability'].value_counts())
 
 ## category counts
 
 counts = {}
-with open('/home/guid/Work/lll_presentation/lll_presentation/lll_presentation/output/TESTcat_counts.json', 'r') as c: 
+with open('/home/guid/Work/lll_presentation/lll_presentation/lll_presentation/data_inputs/cat_counts.txt', 'r') as c: 
     for item in c:
         category, count = item.split(", ")[0], int(item.split(", ")[1])
         counts[category] = count
 
 not_sale = counts['accessories'] + counts['men'] + counts['women']
 sale_pct_invn = (counts['sale'] / not_sale) * 100
+print(not_sale)
+print("pct of product level inventory on sale ::", sale_pct_invn)
+print("on sale and low stock ::", len(sale_and_low.index))
