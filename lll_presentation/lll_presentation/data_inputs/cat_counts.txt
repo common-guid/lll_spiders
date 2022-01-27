@@ -1,0 +1,4 @@
+accessories, 254
+sale, 691
+men, 494
+women, 1017
